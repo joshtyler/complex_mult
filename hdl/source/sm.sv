@@ -34,19 +34,6 @@ read_sm re_sm0
 always_comb
 	read_run = (state == REAL_A) || (state == IMAG_A) || (state == REAL_Q) || (state == IMAG_Q);
 
-//This is what we do in the read states
-//Increments to the next state if the read is done.
-// Returns true if we should read the registers value at this clock edge
-function read_func;
-input stateType next_state;
-begin
-	if(read_done)
-		state <= next_state;
-
-	read_func = read_trigger;
-end
-endfunction
-
 //Main state machine
 always_ff @(posedge clk, negedge reset_n)
 begin
@@ -56,10 +43,10 @@ begin
 	begin
 		unique case(state)
 			//Reading inputs
-			REAL_A: if(read_func(IMAG_A)) re_a <= data_in;
-			IMAG_A: if(read_func(REAL_Q)) im_a <= data_in;
-			REAL_Q: if(read_func(IMAG_Q)) re_q <= data_in;
-			IMAG_Q: if(read_func(DISP_REAL)) im_q <= data_in;
+			REAL_A: begin if(read_done) state <= IMAG_A; if(read_trigger) re_a <= data_in; end
+			IMAG_A: begin if(read_done) state <= REAL_Q; if(read_trigger) im_a <= data_in; end
+			REAL_Q: begin if(read_done) state <= IMAG_Q; if(read_trigger) re_q <= data_in; end
+			IMAG_Q: begin if(read_done) state <= DISP_REAL; if(read_trigger) im_q <= data_in; end
 
 			//Displaying
 			DISP_REAL : if(handshake == 1) state <= DISP_IMAG;

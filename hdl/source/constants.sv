@@ -16,4 +16,17 @@
 `define SWITCH_WIDTH 10
 `define SWITCH_SIZE[`SWITCH_WIDTH-1:0]
 
+//System constants
+`define CLOCK_PERIOD 20ns
+
+//Use a different switch bounce delay for simulation for better performance
+`ifdef MODEL_TECH
+	//Simulation
+	`define SW_BOUNCE_DELAY 100ns
+	`define SW_SIMULATION_DELAY 200ns
+`else
+	//Synthesis
+	`define SW_BOUNCE_DELAY 20ms
+`endif
+
 `endif

@@ -2,13 +2,45 @@
 
 `include "constants.sv"
 
-module cmplx_mult(input logic clk, input logic `SWITCH_SIZE SW, output logic `LED_SIZE LED);
+module cmplx_mult(
+input logic clk,
+input logic `SWITCH_SIZE switches,
+output logic `LED_SIZE LED,
+output logic [6:0] HEX0,
+output logic [6:0] HEX1,
+output logic [6:0] HEX2,
+output logic [6:0] HEX3,
+output logic [6:0] HEX4,
+output logic [6:0] HEX5,
+output logic [6:0] HEX6,
+output logic [6:0] HEX7);
 
 //Inputs to multiplier
 logic `WORD_SIZE re_a, im_a, re_q, im_q;
 
 //Outputs from multiplier
 logic `WORD_SIZE re_res, im_res;
+
+//We need to repackage the switches with the handshake and reset debounced
+logic `SWITCH_SIZE SW;
+always_comb
+	SW[$high(SW)-2:$low(SW)] = switches[$high(switches)-2:$low(switches)];
+//Reset
+debounce #(.DELAY(`SW_BOUNCE_DELAY), .CLOCK_PERIOD(`CLOCK_PERIOD)) db0
+(
+	.clk(clk),
+	.signal_in(switches[$high(switches)]),
+	.signal_out(SW[$high(SW)])
+
+);
+//Handshake
+debounce #(.DELAY(`SW_BOUNCE_DELAY), .CLOCK_PERIOD(`CLOCK_PERIOD)) db1
+(
+	.clk(clk),
+	.signal_in(switches[$high(switches)-1]),
+	.signal_out(SW[$high(SW)-1])
+
+);
 
 //Controlling state machine
 sm sm0 (.*);
@@ -37,5 +69,36 @@ end
 
 mult mult0
 (.*);
+
+//Displays
+logic [6:0] sw_hex[3:0];
+always_comb
+begin
+	HEX0 = ~ sw_hex[0]; //Units
+	HEX1 = ~ sw_hex[1]; //Tens
+	HEX2 = ~ sw_hex[2]; //Hundreds
+	HEX3 = ~ sw_hex[3]; //Sign
+end
+
+bin_to_bcd sw_disp
+(
+	.in(SW[7:0]),
+	.disp(sw_hex)
+);
+
+logic [6:0] led_hex[3:0];
+always_comb
+begin
+	HEX4 = ~ led_hex[0]; //Units
+	HEX5 = ~ led_hex[1]; //Tens
+	HEX6 = ~ led_hex[2]; //Hundreds
+	HEX7 = ~ led_hex[3]; //Sign
+end
+
+bin_to_bcd led_disp
+(
+	.in(LED),
+	.disp(led_hex)
+);
 
 endmodule

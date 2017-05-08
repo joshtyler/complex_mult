@@ -1,0 +1,17 @@
+#Gitignore for quartus
+
+#Ignore quartus generated folders
+db/*
+incremental_db/*
+simulation/*
+timing/*
+output_files/*
+
+#Ignore Quartus generated files
+*_description.txt
+*.qws
+*.rpt
+*.bak
+serv_req_info.txt
+
+!*.sof

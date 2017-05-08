@@ -34,8 +34,8 @@ initial
 begin
 	clk = 0;
 	reset_n = 1;
-	# 10ns reset_n = 0;
-	# 10ns reset_n = 1;
+	# `SW_SIMULATION_DELAY reset_n = 0;
+	# `SW_SIMULATION_DELAY reset_n = 1;
 	
 	forever
 		#5ns clk = !clk;
@@ -45,9 +45,9 @@ task automatic inputWord; //Automatic is necessary for functions with pass by re
 input logic `WORD_SIZE word;
 begin
 	assert(handshake == 0);
-	#1us handshake = 1;
+	#`SW_SIMULATION_DELAY handshake = 1;
 	data_in = word;
-	#1us handshake = 0;
+	#`SW_SIMULATION_DELAY handshake = 0;
 end
 endtask;
 
@@ -61,11 +61,11 @@ begin
 	inputWord(re_q_in);
 	inputWord(im_q_in);
 
-	#1us assert(LED == re_res_in);
+	#`SW_SIMULATION_DELAY assert(LED == re_res_in);
 	handshake = 1;
-	#1us assert(LED == im_res_in);
+	#`SW_SIMULATION_DELAY assert(LED == im_res_in);
 	handshake = 0;
-	#1us;
+	#`SW_SIMULATION_DELAY;
 	
 end
 endtask;
@@ -80,7 +80,8 @@ begin
 	//Reset
 	handshake = 0;
 	data_in = 0;
-	#32ns;
+	#`SW_SIMULATION_DELAY;
+	#`SW_SIMULATION_DELAY;
 
 	file = $fopen(FILENAME,"r");
 	while($fscanf(file,"%b, %b, %b, %b, %b, %b, %s\n", re_a, im_a, re_q, im_q, re_res, im_res, description) == 7)
