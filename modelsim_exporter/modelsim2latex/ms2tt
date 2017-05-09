@@ -118,7 +118,7 @@ class LatexOutput :
                                 return vec
 
                 out = [(self.bitconv[s] if len(s)==1 else ('D{'+(bin(_conv_vector(s)) if self.dataformat=='bin' else '0x'+str(hex(_conv_vector(s))))[2:]+'}' \
-                        if self.isnum(_conv_vector(s)) else 'U')) for s in sigdata]
+                        if self.isnum(_conv_vector(s)) else 'D{'+s+'}')) for s in sigdata]
                 return (out if len(sigdata[0])==1 else [str(sum(1 for _ in g))+(k if self.dataformat!='none' else sub('{.*?}','{}',k)) for k,g in groupby(out)])
 
 class Converter :
