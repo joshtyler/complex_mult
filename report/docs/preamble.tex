@@ -1,0 +1,137 @@
+%Page setup
+\documentclass[12pt, a4paper]{article}
+
+%Setup margins
+\usepackage{geometry}
+\geometry{a4paper, portrait, margin=0.75in}
+
+%Set Abstract title to a sensible size
+\renewcommand{\abstractname}{\Large Abstract}
+
+%Times for main font and math
+\usepackage{mathptmx}
+
+% Natbib references
+\usepackage[numbers]{natbib}
+
+%Colour
+\usepackage[dvipsnames, table]{xcolor}
+\newcommand{\shadeCell}
+{
+\cellcolor{black!25}
+}
+
+% Hyperref:
+% This package makes all references within your document clickable. By default, these references will become boxed and colored. This is turned back to normal with the \hypersetup command below.
+\usepackage[pdfpagelabels]{hyperref} %pdfpagelabels allows page numbers such as i and ii in pdf reader
+\hypersetup{colorlinks=false,pdfborder=0 0 0}
+
+\usepackage{etoolbox} %Let's let bibliography be ragged right to avoid typesetting problems
+\apptocmd{\thebibliography}{\raggedright}{}{}
+
+%\usepackage{pgfplotstable}
+%\pgfplotsset{compat=1.12} %Compile the same on everything
+
+
+%Appendix Handling
+\usepackage[titletoc,title]{appendix}
+
+%Acronyms!
+\usepackage[nonumberlist, acronyms, toc,]{glossaries}
+\setacronymstyle{long-short}
+\renewcommand{\glsgroupskip}{} %Don't put a small space between groups
+\input{docs/acronyms} %Import list of acronyms
+
+%Mathematical symbols
+\usepackage{amssymb}
+
+%si representations
+\usepackage{siunitx}
+
+%Drawing
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, shapes.misc, arrows}
+\usetikzlibrary{calc}
+\usetikzlibrary{positioning}
+\usetikzlibrary{patterns}
+\usetikzlibrary{automata}
+
+%Pretty plots
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+% We have some pretty big data sets, so lets use the externalise feature
+% See http://tex.stackexchange.com/questions/7953/how-to-expand-texs-main-memory-size-pgfplots-memory-overload
+%\usepgfplotslibrary{external} 
+%\tikzexternalize
+
+% Pretty tables
+\usepackage{tabularx, booktabs}
+\renewcommand{\tabularxcolumn}[1]{>{\small}m{#1}} %Vertically centre with X
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+%\newcolumntype{Y}{}
+
+\usepackage{multirow}
+
+% Caption. For better looking captions the captions.
+\usepackage{caption}
+\usepackage{subcaption}
+
+
+
+%Listings
+\usepackage{listings,chngcntr}
+% set the default code style
+\lstset{
+	frame=tb, % draw a frame at the top and bottom of the code block
+	tabsize=4, % tab space width
+	breaklines=true, %Wrap text
+	showstringspaces=false, % don't mark spaces in strings
+	numbers=left, % display line numbers on the left
+	commentstyle=\color{ForestGreen}, % comment color
+	keywordstyle=\color{blue}, % keyword color
+	stringstyle=\color{red}, % string color
+	basicstyle=\small %normal font size
+}
+
+\lstdefinelanguage{picoASM}{
+	morekeywords = { CONST, JLEZ, JZ, JGZ, JNZ, JP, MOV, LDI, ADD, MULTI},
+	sensitive=false,
+	morecomment=[l]{//},
+}
+
+%Make heading say "list of listings", not just "listings"
+\renewcommand\lstlistlistingname{List of Listings}
+
+%% Allow listing line break at any number
+%% http://tex.stackexchange.com/questions/65743/listings-package-does-not-break
+%\makeatletter
+%\def\lst@lettertrue{\let\lst@ifletter\iffalse}
+%\makeatother
+
+%Allow easy typesetting of SI units
+\usepackage{siunitx}
+
+%Allow ragged right tables
+\usepackage{array}
+
+\usepackage{textcomp}
+
+%Allow floatbarrier
+\usepackage{placeins}
+
+%Timing diagrams
+\usepackage{tikz-timing}[2011/01/09]
+
+%Posh enumeration
+
+\usepackage{enumitem}
+
+\setlist[enumerate]{nosep} %No special separation for enumerated lists
+
+\setlist[itemize]{nosep}
+
+%Review command for red text
+\newcommand{\review}[1]
+{
+	{\color{red} \bfseries #1}
+}
