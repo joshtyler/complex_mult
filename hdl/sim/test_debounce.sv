@@ -13,7 +13,7 @@ logic clk, signal_in;
 //Output
 logic signal_out;
 
-debounce #(.DELAY(1us), .CLOCK_PERIOD(10ns)) dut (.*);
+debounce #(.DELAY(100ns), .CLOCK_PERIOD(10ns)) dut (.*);
 
 
 //Clock
@@ -29,14 +29,14 @@ end
 initial
 begin
 	signal_in = 0;
-	#1.5us assert(signal_out == signal_in);
+	#110ns assert(signal_out == signal_in);
 
 	signal_in = 1;
-	#0.5us assert(signal_out != signal_in);
+	#20ns assert(signal_out != signal_in);
 	signal_in = 0;
-	#0.9us signal_in = 1;
-	#1.1us assert(signal_out == signal_in);
-	#1us;
+	#10ns signal_in = 1;
+	#110ns assert(signal_out == signal_in);
+	#50ns;
 	$stop;
 end
 
