@@ -1,5 +1,180 @@
 \section{Introduction} \label{sec:intro}
 
+\section{Design} \label{sec:design}
+\review{Include `Circuit diagrams' and discussion of design}
 
-\section{Conclusion}
+\begin{figure}[ht]
+	\centering
+	
+	\begin{tikzpicture}[node distance=\tikzNodeDist]
+	
+	%Blocks
+	\node (dbnce) [normalBlock] at (0,0) {\shortstack{Debouncers}};
+	\node (sm) [normalBlock, right= of dbnce.south east, anchor=south west, minimum height = 2*\tikzNodeDist] {\shortstack{State\\Machine}};
+	\node (mult) [normalBlock, below= of sm] {\shortstack{Multiplier}};
+	\node (dispsw) [normalBlock, above= of sm] {\shortstack{Switch\\Display\\Decoder}};
+	\node (displed) [normalBlock, right= of sm] {\shortstack{LED\\Display\\Decoder}};
+	
+	%Input side arrows
+	\draw[arrowRev] (dbnce.west) -- ++(-0.5*\tikzNodeDist,0) coordinate(swcorner) to node[left] {Switches[9:8]} ++(0,\tikzNodeDist) coordinate(swfork) -- ++(-\tikzNodeDist,0) coordinate(swin) node[left] {Switches[9:0]};
+	
+	\draw[arrowNml] (swfork) to node[above] {Switches[7:0]} (sm.west |- swfork.north);
+	
+	\draw[arrowNml] ([xshift=-0.5*\tikzNodeDist] sm.west |- swfork.north) |- (dispsw);
+	
+	\draw[arrowNml] (dbnce) -- (sm.west |- dbnce);
+	
+	\buswidth{swfork}{$8$}{above}{-\buswidthoffset}{0};
+	\buswidth{swin}{$10$}{above}{-\buswidthoffset}{0};
+	\buswidth{swcorner}{$2$}{above}{-\buswidthoffset}{0};
+	\buswidth{dbnce.east}{$2$}{above}{-\buswidthoffset}{0};
+	
+	%Output side arrows
+	\draw[arrowNml] (displed.east) -- ++(\tikzNodeDist,0) coordinate(output) node[right] {\shortstack{LED\\7 Segment\\Displays}};
+	\buswidth{displed.east}{$21$}{above}{-\buswidthoffset}{0};
+	
+	\draw[arrowNml] (dispsw.east) -- (output |- dispsw.east) node[right] {\shortstack{Switch\\7 Segment\\Displays}};
+	\buswidth{dispsw.east}{$21$}{above}{-\buswidthoffset}{0};
+	
+	
+	\draw[arrowNml] (sm) to node[above] {LEDs} (displed);
+	\buswidth{sm.east}{$8$}{below}{-\buswidthoffset}{0};
+	
+	\draw[arrowNml] ([xshift=0.5*\tikzNodeDist] sm.east) |- ([yshift=-\tikzNodeDist]output) node[right] {LEDs};
+	
+	%Multiplier arrows
+	\coordinate(multstart1) at ([xshift=0.25*\tikzNodeDist] sm.south west);
+	\coordinate(multend1) at ( multstart1 |- mult.north);
+	\coordinate(multend2) at ([xshift=-0.25*\tikzNodeDist] sm.south east);
+	\coordinate(multstart2) at ( multend2 |- mult.north);
+	
+	\draw[arrowNml] (multstart1) to node[left] {\shortstack{$4 \times$ 8-bit\\Input Words}} (multend1);
+	\draw[arrowNml] (multstart2) to node[right] {\shortstack{$2 \times$ 8-bit\\Output Words}} ( multend2);
+	
+	\buswidth{multstart1}{$32$}{right}{0}{\buswidthoffset};
+	\buswidth{multstart2}{$16$}{left}{0}{-\buswidthoffset};
+	
+	\end{tikzpicture}
+	\caption{Overall Block Diagram}
+	\label{fig:overall-block-diag}
+\end{figure}
+
+\subsection{Complex Multiplier} \label{sec:design-mult}
+
+\begin{figure}[ht]
+	\centering
+	
+	\begin{tikzpicture}[node distance=\tikzNodeDist]
+	
+	%Blocks
+	\node (mult1) [normalBlock] at (0,0) {\shortstack{Multiplier\\1}};
+	\coordinate (middlem1m2) at ([xshift=0.5*\tikzNodeDist] mult1.south east);
+	\node (mult2) [normalBlock, right= of mult1] {\shortstack{Multiplier\\2}};
+	\node (mult3) [normalBlock, right= of mult2] {\shortstack{Multiplier\\3}};
+	\coordinate (middlem3m4) at ([xshift=0.5*\tikzNodeDist] mult3.south east);
+	\node (mult4) [normalBlock, right= of mult3] {\shortstack{Multiplier\\4}};
+	
+	\node (sub) [normalBlock, below= of middlem1m2] {\shortstack{Subtractor}};
+	\node (add) [normalBlock, below= of middlem3m4] {\shortstack{Adder}};
+	
+	%Inputs
+	\draw[arrowRev] ([xshift=-0.25*\tikzNodeDist] mult1.north) -- ++(0,0.5*\tikzNodeDist) coordinate(in1) node[above] {$a$};
+	\draw[arrowRev] ([xshift=0.25*\tikzNodeDist] mult1.north) -- ++(0,0.5*\tikzNodeDist) coordinate(in2) node[above] {$c$};
+	
+	\draw[arrowRev] ([xshift=-0.25*\tikzNodeDist] mult2.north) -- ++(0,0.5*\tikzNodeDist) coordinate(in3) node[above] {$b$};
+	\draw[arrowRev] ([xshift=0.25*\tikzNodeDist] mult2.north) -- ++(0,0.5*\tikzNodeDist) coordinate(in4) node[above] {$d$};
+	
+	\draw[arrowRev] ([xshift=-0.25*\tikzNodeDist] mult3.north) -- ++(0,0.5*\tikzNodeDist) coordinate(in5) node[above] {$a$};
+	\draw[arrowRev] ([xshift=0.25*\tikzNodeDist] mult3.north) -- ++(0,0.5*\tikzNodeDist) coordinate(in6) node[above] {$d$};
+	
+	\draw[arrowRev] ([xshift=-0.25*\tikzNodeDist] mult4.north) -- ++(0,0.5*\tikzNodeDist) coordinate(in7) node[above] {$b$};
+	\draw[arrowRev] ([xshift=0.25*\tikzNodeDist] mult4.north) -- ++(0,0.5*\tikzNodeDist) coordinate(in8) node[above] {$c$};
+	
+	\buswidth{in1}{$15$}{left}{0}{\buswidthoffset};
+	\buswidth{in2}{$15$}{right}{0}{\buswidthoffset};
+	\buswidth{in3}{$15$}{left}{0}{\buswidthoffset};
+	\buswidth{in4}{$15$}{right}{0}{\buswidthoffset};
+	\buswidth{in5}{$15$}{left}{0}{\buswidthoffset};
+	\buswidth{in6}{$15$}{right}{0}{\buswidthoffset};
+	\buswidth{in7}{$15$}{left}{0}{\buswidthoffset};
+	\buswidth{in8}{$15$}{right}{0}{\buswidthoffset};
+	
+	%Intermediate signals
+	\draw[arrowNml] (mult1) |- (sub);
+	\draw[arrowNml] (mult2) |- (sub);
+	\draw[arrowNml] (mult3) |- (add);
+	\draw[arrowNml] (mult4) |- (add);
+	
+	\buswidth{mult1.south}{$30$}{left}{0}{-0.15*\tikzNodeDist};
+	\buswidth{mult2.south}{$30$}{left}{0}{-0.15*\tikzNodeDist};
+	\buswidth{mult3.south}{$30$}{left}{0}{-0.15*\tikzNodeDist};
+	\buswidth{mult4.south}{$30$}{left}{0}{-0.15*\tikzNodeDist};
+	
+	% Outputs
+	\draw[arrowNml] (sub.south) -- ++(0,-0.5*\tikzNodeDist) node[below] {$\Re(\text{result})$};
+	\draw[arrowNml] (add.south) -- ++(0,-0.5*\tikzNodeDist) node[below] {$\Im(\text{result})$};
+	
+	\buswidth{sub.south}{$30$}{left}{0}{\buswidthoffset};
+	\buswidth{add.south}{$30$}{left}{0}{\buswidthoffset};
+	
+	\end{tikzpicture}
+	\caption{Multiplier architecture}
+	\label{fig:mult-arch}
+\end{figure}
+
+\subsection{State Machine} \label{sec:design-sm}
+
+\begin{figure}[ht]
+	\centering
+	\begin{tikzpicture}[stateMachine]
+	
+	\node[initial,state] (halt) {\texttt{HALT}};
+	\node[state]         (wait1) [right of=halt] {\texttt{WAIT\_1}};
+	\node[state]         (wait0) [right of=wait1] {\texttt{WAIT\_0}};
+	\node[state]         (done) [right of=wait0] {\texttt{DONE}};
+	
+	
+	\path (halt) edge[bend left] node[auto] {\texttt{run}} (wait1)
+	(wait1) edge[bend left] node[auto] {\texttt{handshake}} (wait0)
+	(wait0) edge[bend left] node[auto] {\texttt{!handshake}} (done)
+	(done) edge[bend left] node[auto] {} (halt);
+	
+	\end{tikzpicture}
+	\caption{Read state machine state transition diagram}
+	\label{fig:read-sm-transition}
+\end{figure}
+
+\begin{figure}[ht]
+	\centering
+	\begin{tikzpicture}[stateMachine]
+	
+	\node[initial,state] (realA) {\texttt{REAL\_A}};
+	\node[state]         (imagA) [right of=realA] {\texttt{IMAG\_A}};
+	\node[state]         (realQ) [right of=imagA] {\texttt{REAL\_Q}};
+	\node[state]         (imagQ) [right of=realQ] {\texttt{IMAG\_Q}};
+	\coordinate (middle) at ([xshift=0.5*\tikzStateNodeDist] imagA);
+	
+	\node[state]         (dispR) [below of=middle] {\texttt{\shortstack{DISP\_\\REAL}}};
+	\node[state]         (dispI) [below of=dispR] {\texttt{\shortstack{DISP\_\\IMAG}}};
+	
+	\path (realA) edge[bend left] node[auto] {\texttt{read\_done}} (imagA)
+	(imagA) edge[bend left] node[auto] {\texttt{read\_done}} (realQ)
+	(realQ) edge[bend left] node[auto] {\texttt{read\_done}} (imagQ)
+	(imagQ) edge[bend left] node[auto] {\texttt{read\_done}} (dispR)
+	(dispR) edge[] node[auto] {\texttt{handshake}} (dispI)
+	(dispI) edge[bend left] node[auto] {\texttt{!handshake}} (realA);
+	
+	\end{tikzpicture}
+	\caption{Main state machine state transition diagram}
+	\label{fig:main-sm-transition}
+\end{figure}
+
+\section{Verification} \label{sec:verif}
+\review{Include sample data and results}
+
+\section{Synthesis}  \label{sec:synth}
+\review{Include ``Synthesis Result''}
+
+
+\section{Conclusion}  \label{sec:conclusion}
 

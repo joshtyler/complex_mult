@@ -45,6 +45,9 @@
 %Mathematical symbols
 \usepackage{amssymb}
 
+%Sensible Re and Im
+\usepackage{physics}
+
 %si representations
 \usepackage{siunitx}
 
@@ -55,6 +58,21 @@
 \usetikzlibrary{positioning}
 \usetikzlibrary{patterns}
 \usetikzlibrary{automata}
+
+\newcommand{\tikzNodeDist}{1.5cm}
+\newcommand{\tikzStateNodeDist}{3cm}
+
+\tikzset{font={\small}} %set small font
+\tikzstyle{every state}=[fill=black!40,draw=none,minimum size=1.75cm] %Setup state machine style
+\tikzstyle{stateMachine}=[->, ,auto,node distance=\tikzStateNodeDist,thick, initial text=Reset]
+
+\tikzstyle{normalBlock} = [rectangle, rounded corners, minimum width=\tikzNodeDist, minimum height=\tikzNodeDist, text centered, draw=black, fill=black!40]
+\tikzstyle{arrowNml} = [thick,->,>=stealth]
+\tikzstyle{arrowRev} = [thick,<-,>=stealth]
+\tikzstyle{arrowDbl} = [thick,<->,>=stealth]
+\tikzstyle{lineNml} = [thick]
+\newcommand{\buswidth}[5]{\draw ([xshift=#4,yshift=#5] #1) node [#3=.6ex,] {#2} +(45:-.8ex) -- +(45:.8ex)}
+\newcommand{\buswidthoffset}{-0.15*\tikzNodeDist}
 
 %Pretty plots
 \usepackage{pgfplots}
