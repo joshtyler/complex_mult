@@ -11,12 +11,13 @@ localparam FILENAME = "../../matlab/mult_tests.txt";
 
 //Inputs
 logic clk;
-logic `SWITCH_SIZE SW;
+logic `SWITCH_SIZE switches;
 
 //Output
 logic `LED_SIZE LED;
+logic [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, HEX6, HEX7;
 
-sm dut (.*);
+cmplx_mult dut (.*);
 
 //Assign switches to their fucntions
 logic reset_n;
@@ -24,9 +25,9 @@ logic handshake;
 logic `WORD_SIZE data_in;
 always_comb
 begin
-	SW[$high(SW)] = reset_n;
-	SW[$high(SW) -1] = handshake;
-	SW[$high(SW) -2 : $low(SW)] = data_in;
+	switches[$high(switches)] = reset_n;
+	switches[$high(switches) -1] = handshake;
+	switches[$high(switches) -2 : $low(switches)] = data_in;
 end
 
 //Clock and reset
