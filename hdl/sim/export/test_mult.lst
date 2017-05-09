@@ -1,0 +1,24 @@
+         ps       /test_mult/dut/re_x        /test_mult/dut/im_y       /test_mult/dut/im_z         
+          delta            /test_mult/dut/im_x            /test_mult/dut/re_z                      
+                                    /test_mult/dut/re_y                                            
+          0  +0              15'hxxxx 15'hxxxx 15'hxxxx 15'hxxxx 30'hxxxxxxxx 30'hxxxxxxxx 
+          0  +1              15'h751f 15'h7702 15'h285a 15'h7878 30'hxxxxxxxx 30'hxxxxxxxx 
+          0  +2              15'h751f 15'h7702 15'h285a 15'h7878 30'h3e054bf6 30'h3ee7153c 
+       1000  +1              15'h7508 15'h7c42 15'h4cdf 15'h2453 30'h3e054bf6 30'h3ee7153c 
+       1000  +2              15'h7508 15'h7c42 15'h4cdf 15'h2453 30'h02b8c092 30'h3f30e716 
+       2000  +1              15'h6bf9 15'h6a6d 15'h4ace 15'h75a1 30'h02b8c092 30'h3f30e716 
+       2000  +2              15'h6bf9 15'h6a6d 15'h4ace 15'h75a1 30'h03499cd1 30'h054b5a4f 
+       3000  +1              15'h27de 15'h0925 15'h5960 15'h6f1a 30'h03499cd1 30'h054b5a4f 
+       3000  +2              15'h27de 15'h0925 15'h5960 15'h6f1a 30'h3a96a87e 30'h3bfd196c 
+       4000  +1              15'h2dc1 15'h41fb 15'h3e3e 15'h6469 30'h3a96a87e 30'h3bfd196c 
+       4000  +2              15'h2dc1 15'h41fb 15'h3e3e 15'h6469 30'h0470b6cb 30'h2bfd6cf3 
+       5000  +1              15'h27cd 15'h2bd3 15'h34bf 15'h0827 30'h0470b6cb 30'h2bfd6cf3 
+       5000  +2              15'h27cd 15'h2bd3 15'h34bf 15'h0827 30'h06ce10ce 30'h0a4c06a8 
+       6000  +1              15'h46e5 15'h0bd2 15'h18de 15'h52ce 30'h06ce10ce 30'h0a4c06a8 
+       6000  +2              15'h46e5 15'h0bd2 15'h18de 15'h52ce 30'h3c8a2b9a 30'h0b3ad662 
+       7000  +1              15'h31e0 15'h512e 15'h7341 15'h08d2 30'h3c8a2b9a 30'h0b3ad662 
+       7000  +2              15'h31e0 15'h512e 15'h7341 15'h08d2 30'h3f214224 30'h040cb06e 
+       8000  +1              15'h7052 15'h61ae 15'h43f9 15'h4b92 30'h3f214224 30'h040cb06e 
+       8000  +2              15'h7052 15'h61ae 15'h43f9 15'h4b92 30'h3d778686 30'h0a522102 
+       9000  +1              15'h2fd7 15'h7d61 15'h7212 15'h2575 30'h3d778686 30'h0a522102 
+       9000  +2              15'h2fd7 15'h7d61 15'h7212 15'h2575 30'h3dc7c8c9 30'h07247315 
