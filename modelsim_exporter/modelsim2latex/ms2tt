@@ -1,0 +1,179 @@
+#!/bin/python3
+
+# Copyright (C) 2016 sh-ow
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from os import path
+from collections import namedtuple
+from itertools import chain, groupby, takewhile
+from argparse import ArgumentParser, RawTextHelpFormatter
+from re import sub
+from functools import lru_cache
+from operator import itemgetter
+
+class ModelsimParser :
+        def __init__(self, listfile) :
+                self.listraw = open(listfile,'r').readlines()
+                self.timeidx = [x.name for x in self._read_sigtypes()].index('ps')
+                self.deltaidx  = [x.name for x in self._read_sigtypes()].index('delta')
+        sigincol = namedtuple('sigincol', ['name', 'col'])
+        sigwidata = namedtuple('sigwidata', ['name', 'length', 'data'])
+        evdata = namedtuple('evdata', ['typus', 'data', 'nth'])
+        @staticmethod
+        def isnum(s) :
+	        try :
+		        int(s)
+		        return True
+	        except ValueError :
+		        return False
+        @staticmethod
+        def splitstr(string, seplist) : # split a string according to a index-list
+                return [string[:sep].split()[-1] for sep in seplist]
+        @lru_cache()
+        def _read_sigtypes(self) : # list of available signals and ending columns (sorted by columns)
+                header = takewhile(lambda x : not self.isnum(x.split()[0]), self.listraw)
+                return sorted(list(chain(*[[self.sigincol(name=x,col=line.index(x)+len(x)) for x in line.split()] for line in header])),key=lambda x : x.col)
+        @lru_cache()
+        def _read_sigvals_raw(self) :
+                return [self.splitstr(line, [x.col for x in self._read_sigtypes()]) for line in self.listraw if self.isnum(line.split()[0])]
+        def _extract_sigvals_lastdelta(self, sigvals_raw) :
+                out = []
+                for sig, nextsig in zip(sigvals_raw, sigvals_raw[1:]+[None]) :
+                        if nextsig is not None :
+                                if sig[self.timeidx] != nextsig[self.timeidx] :
+                                        out.append(sig)
+                return out
+        def get_sigvals(self, allvals) :
+                return (self._read_sigvals_raw() if allvals else self._extract_sigvals_lastdelta(self._read_sigvals_raw()))
+        @lru_cache()
+        def get_signames(self) :
+                return [x.name for x in self._read_sigtypes()]
+        def get_sigdata(self, signames, sigvals) :
+                def _get_len(data) :
+                        return (len(data) if len(data.split("'"))==1 else int(data.split("'")[0]))
+                return [self.sigwidata(name=name, length=_get_len(sigvals[0][self.get_signames().index(name)]), \
+                                       data=[sigline[self.get_signames().index(name)].split("'")[-1] for sigline in sigvals]) for \
+                        name in ([signames] if isinstance(signames,str) else signames)]
+        def guess_signame(self, shortname) :
+                occur = [(len(x.split(shortname)[-1]),x) for x in self.get_signames() if shortname in x]
+                return occur[min(enumerate(occur), key=itemgetter(1))[0]][1]
+        def find_event(self, event, sigvals) :
+                nthcnt = 0
+                sigdatat = [(x[1:] if x[0] in "hb" else x) for x in sigvals.data]
+                for idx, [val, nextval] in enumerate(zip(sigdatat,sigdatat[1:]+[None])) :
+                        if nextval is not None  :
+                                if (event.typus == 'risedg' and ((int(val,16) if self.isnum(val) else 0) <\
+                                                                 (int(nextval,16) if self.isnum(nextval) else 0))) or \
+                                (event.typus == 'faledg' and ((int(val,16) if self.isnum(val) else 0) >\
+                                                              (int(nextval,16) if self.isnum(nextval) else 0))) or \
+                                (event.typus == 'match' and (event.data == val)):
+                                        if event.nth == nthcnt :
+                                                return idx
+                                        else :
+                                                nthcnt = nthcnt + 1
+                return 0
+
+class LatexOutput :
+        def __init__(self, dataformat, datachanges) :
+                self.dataformat = dataformat
+                self.bitconv = {'1':'H','0':'L','U':'X','Z':'Z','X':'X', 'x':'X'}
+                self.xscale = 2 #(26/datachanges) # magic constant found by try'n'error
+        def out_mwe(self, end) :
+                return ('\\documentclass[a4paper,DIV14]{scrartcl}\n\\usepackage[ngerman]{babel}\n\\usepackage{tikz-timing}[2009/12/09]\
+                \n\n\\begin{document}\n\\begin{figure}[ht!]\n' if not end else '\\caption{caption}\n\\label{label}\n\\end{figure}\n\\end{document}')
+        def out_timbp(self, end, grid) :
+                return \
+                ('\\begin{tikztimingtable} [xscale='+str('{:.1f}'.format(self.xscale))+']' if not end else\
+                 ('\\extracode\n\\begin{pgfonlayer}{background}\n\t\\vertlines[gray!40]{}\n\\end{pgfonlayer}\n' if grid else '')  + '\\end{tikztimingtable}')
+        @staticmethod
+        def isnum(s) :
+	        try :
+		        int(s)
+		        return True
+	        except ValueError :
+		        return False
+        def out_sig(self, sigdata) :
+                def _conv_vector(vec) :
+                        if vec[0] == 'h' and vec[1] != 'x':
+                                return int(vec[1:],16)
+                        elif vec[0] == 'b':
+                                return int(vec[1:],2)
+                        elif vec[0].isdigit() and self.isnum(vec[1:]):
+                                return int(vec,10) # should be correct in most cases
+                        elif vec[0] == '-':
+                                return int(vec)
+                        else :
+                                return vec
+
+                out = [(self.bitconv[s] if len(s)==1 else ('D{'+(bin(_conv_vector(s)) if self.dataformat=='bin' else '0x'+str(hex(_conv_vector(s))))[2:]+'}' \
+                        if self.isnum(_conv_vector(s)) else 'U')) for s in sigdata]
+                return (out if len(sigdata[0])==1 else [str(sum(1 for _ in g))+(k if self.dataformat!='none' else sub('{.*?}','{}',k)) for k,g in groupby(out)])
+
+class Converter :
+        def __init__(self) :
+                parser = ArgumentParser(description='\t\t\tModelsim to TikzTiming\nParse a .lst-file exported from Modelsim and output LaTeX-sources to generate\n'+\
+                                        'nice timing diagrams, using tikz timing.\n\t\t\t\t\t\t\tsh-ow',formatter_class=RawTextHelpFormatter)
+                parser.add_argument('lstfile',nargs='?',type=str,help='The input .lst-file')
+                parser.add_argument('-a',action='store_true',dest='allvals',help='Use all available values (default: only last delta values).')
+                parser.add_argument('-p',action='store_true',dest='printsigs',help='Only print all available signals.')
+                parser.add_argument('-o',action='store_true',dest='fullpath',\
+                                    help='Output full path of signal names (default: name only).')
+                parser.add_argument('-g',action='store_true',dest='grid',help='Grid in background of LaTeX Timing diagram.')
+                parser.add_argument('-m',action='store_true',dest='mwe',help='Generate LaTeX-output as minimum working example.')
+                parser.add_argument('-v',action='store_true',dest='vectorwidth',help="Don't show vector width in LaTeX-output.")
+                parser.add_argument('-t',nargs='?',type=str,dest='trigsig',help='Signal to configure the start trigger for.')
+                parser.add_argument('-e',nargs='?',choices=['risedg','faledg','match'],default='risedg',dest='trigev',\
+                                    help='Event to trigger on (signal has to be chosen with -t) (default: risedg).')
+                parser.add_argument('-d',nargs='?',type=str,dest='trigdata',help='Data to match with, for trigger-type "match".')
+                parser.add_argument('-i',nargs='?',type=int,dest='trignth',default=1,help='Take the nth trigger event (default: first).')
+                parser.add_argument('-f',nargs='?',choices=['hex','bin','none'],default='hex',dest='dataformat',\
+                                    help='Number format in LaTeX-output for signals with vectorwidth > 1 (default: hex).')
+                parser.add_argument('-s',nargs='?',dest='incsignames',type=lambda s:s.split(','),\
+                                    help='Signals to use (e.g.: sig1,sig2) (default: use all existing).')
+                parser.add_argument('-r',nargs='?',dest='exclsignames',type=lambda s:s.split(','),\
+                                    help='Signals to exclude (e.g.: sig1,sig2) (default: exclude none).')
+                parser.add_argument('-n',nargs='?',type=int,dest='nsigs',default=0,\
+                                    help='Only use n sig changes (from trigger) / leave out last n changes (via neg. val).')
+                self.args = parser.parse_args()
+        def main(self) :
+                lstparse = ModelsimParser(self.args.lstfile)
+                signames = list(filter(lambda x:x not in ['ps','delta'],lstparse.get_signames()) if self.args.incsignames is None \
+                                else map(lambda x:lstparse.guess_signame(x),self.args.incsignames))
+                signames = (list(filter(lambda x:[t for t in self.args.exclsignames if t in x] == [], signames)) \
+                            if self.args.exclsignames is not None else signames)
+                triggerstart = (lstparse.find_event(lstparse.evdata(typus=self.args.trigev,data=self.args.trigdata,\
+                                nth=self.args.trignth-1), lstparse.get_sigdata(lstparse.guess_signame(self.args.trigsig),\
+                                lstparse.get_sigvals(self.args.allvals))[0]) if self.args.trigsig is not None else 0)
+
+                latex = LatexOutput(self.args.dataformat, (len(lstparse.get_sigdata(signames[0], lstparse.get_sigvals(self.args.allvals))[0].data)- \
+                        triggerstart+self.args.nsigs if self.args.nsigs < 1 else self.args.nsigs))
+
+                if self.args.printsigs == True :
+                        return '\n'.join(list(filter(lambda x:x not in ['ps','delta'],lstparse.get_signames())))
+                else :
+                        out = ('% trigger signal: {0}\ttrigger pos: {1}\n'.format(lstparse.guess_signame(self.args.trigsig),\
+                                triggerstart) if self.args.trigsig is not None else '')
+                        out += (latex.out_mwe(0) if self.args.mwe else '')  # mwe start
+                        out += latex.out_timbp(0, self.args.grid)  # timing boilerplate start
+                        out += '\n' + '\n'.join(['\t{0} & {1} \\\\'.format(\
+                                        sub('\(.*?\)','',(path.basename(sig.name) if not self.args.fullpath else sig.name).replace('_','\_'))+\
+                                        ('['+str(sig.length-1)+':0]' if sig.length>1 and not self.args.vectorwidth else ""),\
+                                        ' '.join(latex.out_sig(sig.data[slice(triggerstart,(None if self.args.nsigs==0 else (triggerstart+self.args.nsigs if self.args.nsigs > 0 else self.args.nsigs)))])))\
+                                                 for sig in lstparse.get_sigdata(signames, lstparse.get_sigvals(self.args.allvals))])
+                        out += '\n' + latex.out_timbp(1, self.args.grid) # timing boilerplate end
+                        out += ('\n' + latex.out_mwe(1) if self.args.mwe else '') # mwe end
+                        return out
+conv = Converter()
+print(conv.main())

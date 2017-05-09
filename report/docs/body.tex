@@ -1,5 +1,7 @@
 \section{Introduction} \label{sec:intro}
 
+\input{figs/timing/test_mult}
+
 \section{Design} \label{sec:design}
 \review{Include `Circuit diagrams' and discussion of design}
 
@@ -171,6 +173,78 @@
 
 \section{Verification} \label{sec:verif}
 \review{Include sample data and results}
+
+%%%%%%%%%%%%%
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_bin\_to\_bcd.sv} Stimulus}, label={lst:test-bin-to-bcd},firstnumber=17,linerange={17-37}]{../hdl/sim/test_bin_to_bcd.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_bin_to_bcd}
+	\caption{\texttt{test\_bin\_to\_bcd.sv} Output}
+	\label{fig:test-bin-to-bcd}
+\end{figure}
+
+%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_cmplx\_mult.sv} Stimulus}, label={lst:test-cmplx-mult},firstnumber=17,linerange={17-37}]{../hdl/sim/test_cmplx_mult.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_cmplx_mult}
+	\caption{\texttt{test\_cmplx\_mult.sv} Output}
+	\label{fig:test-cmplx-mult}
+\end{figure}
+
+%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_debounce.sv} Stimulus}, label={lst:test-debounce},firstnumber=17,linerange={17-37}]{../hdl/sim/test_debounce.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_debounce}
+	\caption{\texttt{test\_debounce.sv} Output}
+	\label{fig:test-debounce}
+\end{figure}
+
+%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_mult.sv} Stimulus}, label={lst:test-mult},firstnumber=17,linerange={17-37}]{../hdl/sim/test_mult.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_mult}
+	\caption{\texttt{test\_mult.sv} Output}
+	\label{fig:test-mult}
+\end{figure}
+
+%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_read\_sm.sv} Stimulus}, label={lst:test-read-sm},firstnumber=17,linerange={17-37}]{../hdl/sim/test_read_sm.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_read_sm}
+	\caption{\texttt{test\_read\_sm.sv} Output}
+	\label{fig:test-read-sm}
+\end{figure}
+
+%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_sm.sv} Stimulus}, label={lst:test-sm},firstnumber=17,linerange={17-37}]{../hdl/sim/test_sm.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_sm}
+	\caption{\texttt{test\_sm.sv} Output}
+	\label{fig:test-sm}
+\end{figure}
+
+%%%%%%%%%%%%%
 
 \section{Synthesis}  \label{sec:synth}
 \review{Include ``Synthesis Result''}
