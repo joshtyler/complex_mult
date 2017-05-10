@@ -1,19 +1,17 @@
 \section{Introduction} \label{sec:intro}
-The aim of this coursework assignment is to design, and implement using SystemVerilog, a multiplier of two complex numbers.
+The aim of this assignment is to design, and implement using SystemVerilog, a multiplier of two complex numbers.
 
 The objectives are:
 \begin{enumerate}
-	\item Design of a module capable of multiplying two complex numbers.
-	\item Implementation of the designed module using SystemVerilog.
+	\item Design of hardware capable of multiplying two complex numbers.
+	\item Implementation of the design using SystemVerilog.
 	\item Verification of the SystemVerilog model, by simulation.
-	\item Validation of the synthesised design
+	\item Hardware implementation and validation of design
 \end{enumerate}
 
-In order to effectively implement and demonstrate the multiplier, a state machine is also required which reads the desired inputs switches, and displays the result on \glspl{led} on a \gls{fpga} development board.
+In order to effectively implement and demonstrate the multiplier, a state machine is also required which reads the desired inputs from switches, and displays the result on \glspl{led}.
 
-In addition to the base specification, an additional SystemVerilog module was written which decodes the value displayed on the switches and \glspl{led} and displays it in decimal using 7-segment displays. It should be noted that this module was previously created by the author for a different piece of coursework, and so has been adapted for this project, but not written from scratch \cite{tyler2017}.
-
-It has been decided to display block diagrams, rather than \gls{rtl} schematics in this report, as they convey the same information, whilst being far more comprehensible.
+In addition to the base specification, an additional SystemVerilog module was written which decodes the value displayed on the switches and \glspl{led} and displays it in decimal using 7-segment displays. It should be noted that this module was previously created by the author for a different piece of coursework, and so has been adapted for this project, but not written from scratch. Design and verification is therefore discussed in the report for the that assignment \cite{tyler2017}.
 
 This report contains timing diagrams which have been exported from ModelSim, and converted to a Ti\textit{k}Z timing waveform using modelsim2latex \cite{show2016}. Small modifications were made to the program to ensure compatibility with the exported waveforms. In each case, the waveform rendered by Ti\textit{k}Z has been checked against the displayed result in ModelSim, to ensure correct operation of the program.
 
@@ -24,9 +22,9 @@ This report contains timing diagrams which have been exported from ModelSim, and
 
 Figure \ref{fig:overall-block-diag} shows the overall block diagram of the implemented design. The central block is the main state machine of the design. This state machine is responsible for reading the desired input values from switches, storing them in registers, and displaying the calculated result on \glspl{led}.
 
-It should be noted that the most significant two switches are debounced before being presented to the state machine. The reason for this is that these two switches are responsible for signalling when to load each input word, and when to display each output word (referred to as the `handshake' switch within this report), and the asynchronous reset of the system. The other switches are only clocked on transition of the handshake switch, and so it does not matter if they bounce, provided they have settled when the handshake switch is transitioned.
+The most significant two switches are debounced before being presented to the state machine. One switch is responsible for signalling when to load each input word, display each output word (referred to herein as the `handshake' switch). The other is an asynchronous reset switch. Switch bounce would be a problem on these switches, however switches are only sampled on transition of the handshake switch, therefore debouncing is unnecessary.
 
-The multiplier is purely combinational and calculates the result of multiplication of the input words presented to it by the state machine. The state machine then multiplexes the relevant output word to the output.
+The multiplier is purely combinational and calculates the result of multiplication of the input words presented to it by the state machine. The state machine then multiplexes the relevant result word to the output.
 
 It should be noted that both the input and output words are truncated from what the multiplier is capable of. This is discussed further in section \ref{sec:design-mult}.
 
@@ -165,15 +163,15 @@ A block diagram of the complex Multiplier is shown in Figure \ref{fig:mult-arch}
 
 An alternative architecture is possible, which requires, two $n$-bit adders, an $n$-bit subtracter, three $n$-bit multipliers, a $2n$-bit adder, and a $2n$-bit subtracter. This architecture is often preferred if implementing a multiplier from logic elements, as a multiplier would use many more logic elements than an adder and subtracter. The Cyclone IV \gls{fpga} that is used for this implementation has many hardware multipliers, which cannot be reconfigured to another purpose if not used \cite[p.4-1]{altera2016}. Therefore it is advantageous to make use of them, and save the logic elements which would be required for the adder and subtracter.
 
-It should be noted that the inputs to the multiplier are 15-bits wide, which is far greater than the 8-bit words used by the rest of the system. This is necessary because the binary values of the two input words defined in the specification $\alpha$ and $q$, have different bit significances to each other \cite{kazmierski2017}. The real and imaginary parts of $q$ use the standard 8-bit signed integer representation, giving input range -128 -- 127, and having bit significances $-2^7,2^6,...,2^0$. $\alpha$, however, uses a fixed point representation with bit significances $-2^0,2^{-1},...,2^{-7}$, giving an input range -1 -- $[1-2^{-7}]$.
+The inputs to the multiplier are 15-bits wide, which is far greater than the 8-bit words used by the rest of the system. This is necessary because the binary values of the two input words defined in the specification $\alpha$ and $q$, have different bit significances to each other \cite{kazmierski2017}. The real and imaginary parts of $q$ use the standard 8-bit signed integer representation, having bit significances $-2^7,2^6,...,2^0$. $\alpha$, however, uses a fixed point representation with bit significances $-2^0,2^{-1},...,2^{-7}$.
 
-The multiplier input words are thus designed to be wide enough to accept both these representations. Since the $2^0$ bit is present in both, 15 bits are necessary in total. The $q$ numbers are right padded with 7 0s, and the $\alpha$ numbers are sign extended.
+The multiplier input words are thus designed to be wide enough to accept both of these representations. Since the $2^0$ bit is present in both, 15 bits are necessary in total. The $q$ bits are right padded with 7 0s, and the $\alpha$ bits are sign extended.
 
 \FloatBarrier
 \subsection{State Machine} \label{sec:design-sm}
-A diagram showing the operation of the main state machine is shown in Figure \ref{fig:main-sm-transition}. The four states in the top row of the diagram read the four input numbers. Only one state is required for each of these because, whilst reading the inputs is a more complex procudure, a second state machine handles this, and signals to the main state machine when to read the input number and when to transition to the next state. \texttt{read\_done} is the signal which tells the state machine to transition to the next state whilst reading.
+A diagram showing the operation of the main state machine is shown in Figure \ref{fig:main-sm-transition}. The four states in the top row of the diagram read the four input numbers. Only one state is required for each of these because, whilst reading the inputs is a more complex procudure, a second state machine handles this, and signals to the main state machine when to read the input number and when to transition to the next state.
 
-The other two states display the real and imaginary parts of the result. The real part is displayed first then, once the handshake switch goes high, the imaginary part is displayed. This is governed by a multiplexer whose select input is the state of the multiplexer.
+The other two states display the real and imaginary parts of the result. The real part is displayed first then, once the handshake switch goes high, the imaginary part is displayed.
 
 \begin{figure}[ht]
 	\centering
@@ -286,18 +284,6 @@ To test the debouncer, the module was parametrised to wait for \SI{100}{\nano\se
 	\input{figs/timing/test_debounce}
 	\caption{\texttt{test\_debounce.sv} Output}
 	\label{fig:test-debounce}
-\end{figure}
-
-\FloatBarrier
-\subsection{\glsentryshort{bcd} Decoder}
-Testing of the \glsentryshort{bcd} decoder consists of looping through all possible input values and observing the outputs, this is conducted with the stimulus of Listing \ref{lst:test-bin-to-bcd}, and the output waveform, Figure \ref{fig:test-bin-to-bcd}, for the first two numbers $-128$ and $-127$ shows the numbers correctly decoded.
-
-\lstinputlisting[language=verilog, caption={\texttt{test\_bin\_to\_bcd.sv} Stimulus}, label={lst:test-bin-to-bcd},firstnumber=10,linerange={10-18}]{../hdl/sim/test_bin_to_bcd.sv}
-\begin{figure}[ht]
-	\centering
-	\input{figs/timing/test_bin_to_bcd}
-	\caption{\texttt{test\_bin\_to\_bcd.sv} Output}
-	\label{fig:test-bin-to-bcd}
 \end{figure}
 
 \FloatBarrier
