@@ -1,7 +1,38 @@
 \section{Introduction} \label{sec:intro}
+The aim of this coursework assignment is to design, and implement using SystemVerilog, a multiplier of two complex numbers.
 
+The objectives are:
+\begin{enumerate}
+	\item Design of a module capable of multiplying two complex numbers.
+	\item Implementation of the designed module using SystemVerilog.
+	\item Verification of the SystemVerilog model, by simulation.
+	\item Validation of the synthesised design
+\end{enumerate}
+
+In order to effectively implement and demonstrate the multiplier, a state machine is also required which reads the desired inputs switches, and displays the result on \glspl{led} on a \gls{fpga} development board.
+
+In addition to the base specification, an additional SystemVerilog module was written which decodes the value displayed on the switches and \glspl{led} and displays it in decimal using 7-segment displays. It should be noted that this module was previously created by the author for a different piece of coursework, and so has been adapted for this project, but not written from scratch \cite{tyler2017}.
+
+It has been decided to display block diagrams, rather than \gls{rtl} schematics in this report, as they convey the same information, whilst being far more comprehensible.
+
+This report contains timing diagrams which have been exported from ModelSim, and converted to a Ti\textit{k}Z timing waveform using modelsim2latex \cite{show2016}. Small modifications were made to the program to ensure compatibility with the exported waveforms. In each case, the waveform rendered by Ti\textit{k}Z has been checked against the displayed result in ModelSim, to ensure correct operation of the program.
+
+\FloatBarrier
 \section{Design} \label{sec:design}
-\review{Include `Circuit diagrams' and discussion of design}
+
+\subsection{Overview} \label{sec:design-overview}
+
+Figure \ref{fig:overall-block-diag} shows the overall block diagram of the implemented design. The central block is the main state machine of the design. This state machine is responsible for reading the desired input values from switches, storing them in registers, and displaying the calculated result on \glspl{led}.
+
+It should be noted that the most significant two switches are debounced before being presented to the state machine. The reason for this is that these two switches are responsible for signalling when to load each input word, and when to display each output word (referred to as the `handshake' switch within this report), and the asynchronous reset of the system. The other switches are only clocked on transition of the handshake switch, and so it does not matter if they bounce, provided they have settled when the handshake switch is transitioned.
+
+The multiplier is purely combinational and calculates the result of multiplication of the input words presented to it by the state machine. The state machine then multiplexes the relevant output word to the output.
+
+It should be noted that both the input and output words are truncated from what the multiplier is capable of. This is discussed further in section \ref{sec:design-mult}.
+
+The two display decoders take an 8-bit signed input word each, and display the result on seven segment displays.
+
+
 
 \begin{figure}[ht]
 	\centering
@@ -59,7 +90,16 @@
 	\label{fig:overall-block-diag}
 \end{figure}
 
+\FloatBarrier
 \subsection{Complex Multiplier} \label{sec:design-mult}
+
+A block diagram of the complex Multiplier is shown in Figure \ref{fig:mult-arch}. This is the traditional architecture for multiplication of complex numbers, and contains four $n$-bit multipliers, a $2n$-bit adder, and a $2n$-bit subtracter. This architecture comes from expanding the multiplication of two complex numbers $x = a + jb$, and $y = c + jd$, as shown by Equation \ref{eq:cmplx-mult}.
+
+\begin{align}
+	z &= (a+jb)(c+jd) \nonumber \\
+	  &= ac + jad + jbc - bd \nonumber \\
+	  &= (ac - bd) + j(ad + bc) \label{eq:cmplx-mult}
+\end{align}
 
 \begin{figure}[ht]
 	\centering
@@ -74,7 +114,7 @@
 	\coordinate (middlem3m4) at ([xshift=0.5*\tikzNodeDist] mult3.south east);
 	\node (mult4) [normalBlock, right= of mult3] {\shortstack{Multiplier\\4}};
 	
-	\node (sub) [normalBlock, below= of middlem1m2] {\shortstack{Subtractor}};
+	\node (sub) [normalBlock, below= of middlem1m2] {\shortstack{Subtracter}};
 	\node (add) [normalBlock, below= of middlem3m4] {\shortstack{Adder}};
 	
 	%Inputs
@@ -122,27 +162,18 @@
 	\label{fig:mult-arch}
 \end{figure}
 
-\subsection{State Machine} \label{sec:design-sm}
 
-\begin{figure}[ht]
-	\centering
-	\begin{tikzpicture}[stateMachine]
-	
-	\node[initial,state] (halt) {\texttt{HALT}};
-	\node[state]         (wait1) [right of=halt] {\texttt{WAIT\_1}};
-	\node[state]         (wait0) [right of=wait1] {\texttt{WAIT\_0}};
-	\node[state]         (done) [right of=wait0] {\texttt{DONE}};
-	
-	
-	\path (halt) edge[bend left] node[auto] {\texttt{run}} (wait1)
-	(wait1) edge[bend left] node[auto] {\texttt{handshake}} (wait0)
-	(wait0) edge[bend left] node[auto] {\texttt{!handshake}} (done)
-	(done) edge[bend left] node[auto] {} (halt);
-	
-	\end{tikzpicture}
-	\caption{Read state machine state transition diagram}
-	\label{fig:read-sm-transition}
-\end{figure}
+An alternative architecture is possible, which requires, two $n$-bit adders, an $n$-bit subtracter, three $n$-bit multipliers, a $2n$-bit adder, and a $2n$-bit subtracter. This architecture is often preferred if implementing a multiplier from logic elements, as a multiplier would use many more logic elements than an adder and subtracter. The Cyclone IV \gls{fpga} that is used for this implementation has many hardware multipliers, which cannot be reconfigured to another purpose if not used \cite[p.4-1]{altera2016}. Therefore it is advantageous to make use of them, and save the logic elements which would be required for the adder and subtracter.
+
+It should be noted that the inputs to the multiplier are 15-bits wide, which is far greater than the 8-bit words used by the rest of the system. This is necessary because the binary values of the two input words defined in the specification $\alpha$ and $q$, have different bit significances to each other \cite{kazmierski2017}. The real and imaginary parts of $q$ use the standard 8-bit signed integer representation, giving input range -128 -- 127, and having bit significances $-2^7,2^6,...,2^0$. $\alpha$, however, uses a fixed point representation with bit significances $-2^0,2^{-1},...,2^{-7}$, giving an input range -1 -- $[1-2^{-7}]$.
+
+The multiplier input words are thus designed to be wide enough to accept both these representations. Since the $2^0$ bit is present in both, 15 bits are necessary in total. The $q$ numbers are right padded with 7 0s, and the $\alpha$ numbers are sign extended.
+
+\FloatBarrier
+\subsection{State Machine} \label{sec:design-sm}
+A diagram showing the operation of the main state machine is shown in Figure \ref{fig:main-sm-transition}. The four states in the top row of the diagram read the four input numbers. Only one state is required for each of these because, whilst reading the inputs is a more complex procudure, a second state machine handles this, and signals to the main state machine when to read the input number and when to transition to the next state. \texttt{read\_done} is the signal which tells the state machine to transition to the next state whilst reading.
+
+The other two states display the real and imaginary parts of the result. The real part is displayed first then, once the handshake switch goes high, the imaginary part is displayed. This is governed by a multiplexer whose select input is the state of the multiplexer.
 
 \begin{figure}[ht]
 	\centering
@@ -169,51 +200,49 @@
 	\label{fig:main-sm-transition}
 \end{figure}
 
+Figure \ref{fig:read-sm-transition} shows the read state machine. In the \texttt{HALT} state the state machine waits for a the main state machine to be in a read state.
+
+On the transition from \texttt{WAIT\_1} to \texttt{WAIT\_0}, the state machine asserts a \texttt{read} signal for a single clock cycle. This tells the main state machine to sample the data on the switches into an input register. When the read state machine is in the \texttt{DONE} state, the \texttt{done} signal is asserted which triggers the transition of the main state machine.
+
+\begin{figure}[ht]
+	\centering
+	\begin{tikzpicture}[stateMachine]
+	
+	\node[initial,state] (halt) {\texttt{HALT}};
+	\node[state]         (wait1) [right of=halt] {\texttt{WAIT\_1}};
+	\node[state]         (wait0) [right of=wait1] {\texttt{WAIT\_0}};
+	\node[state]         (done) [right of=wait0] {\texttt{DONE}};
+	
+	
+	\path (halt) edge[bend left] node[auto] {\texttt{run}} (wait1)
+	(wait1) edge[bend left] node[auto] {\texttt{handshake}} (wait0)
+	(wait0) edge[bend left] node[auto] {\texttt{!handshake}} (done)
+	(done) edge[bend left] node[auto] {} (halt);
+	
+	\end{tikzpicture}
+	\caption{Read state machine state transition diagram}
+	\label{fig:read-sm-transition}
+\end{figure}
+
+\FloatBarrier
+\subsection{Debouncer}
+The design of the debouncer is relatively simple. It consists of a free-running counter (that is initialised to zero by the bitstream). When the counter reaches it's maximum count (which is determined at compile time from the desired debounce time and clock period, passed to the module as parameters), the input signal is propagated to the output, and the counter is reset. However the module stores the previous value of the input on each clock edge, and if this changes between cycles, the counter is reset.
+
+The effect of this is that the input is only allowed to pass to the output once it has been stable for the time taken for a full run of the counter. This has the effect of suppressing all fast transitions called by switch bounce.
+
+A settling time of \SI{20}{\milli\second} is used in the synthesis of the debounce module.
+
+\FloatBarrier
 \section{Verification} \label{sec:verif}
-\review{Include sample data and results}
-\review{Add asterisked out states manually}
-\review{check waveforms}
-\review{Fix line numbers for stimulus}
+This section, briefly, presents the verification results of each module, as well as from system level testing. It should be noted that for some of the waveforms, the \texttt{clk} signal is displayed as \texttiming{U}. This is because it has too many transitions to accurately display.
 
-%%%%%%%%%%%%%
+\FloatBarrier
+\subsection{Multiplier} \label{sec:test-mult}
+In order to test the multiplier, a set of test vectors were generated using the fixed-point library in \gls{matlab}, and exported to a text file. This is discussed in Appendix \ref{app:matlab-code}.
 
-\lstinputlisting[language=verilog, caption={\texttt{test\_bin\_to\_bcd.sv} Stimulus}, label={lst:test-bin-to-bcd},firstnumber=17,linerange={17-37}]{../hdl/sim/test_bin_to_bcd.sv}
-\begin{figure}[ht]
-	\centering
-	\input{figs/timing/test_bin_to_bcd}
-	\caption{\texttt{test\_bin\_to\_bcd.sv} Output}
-	\label{fig:test-bin-to-bcd}
-\end{figure}
+Listing \ref{lst:test-mult} shows the stimulus used, which loads all of the vectors from the text file. The output waveform, Figure \ref{fig:test-mult} shows the response of the multiplier to each set of inputs. This is verified using assertions in the \texttt{testNums} task.
 
-%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%
-
-\lstinputlisting[language=verilog, caption={\texttt{test\_cmplx\_mult.sv} Stimulus}, label={lst:test-cmplx-mult},firstnumber=17,linerange={17-37}]{../hdl/sim/test_cmplx_mult.sv}
-\begin{figure}[ht]
-	\centering
-	\input{figs/timing/test_cmplx_mult}
-	\caption{\texttt{test\_cmplx\_mult.sv} Output}
-	\label{fig:test-cmplx-mult}
-\end{figure}
-
-%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%
-
-\lstinputlisting[language=verilog, caption={\texttt{test\_debounce.sv} Stimulus}, label={lst:test-debounce},firstnumber=17,linerange={17-37}]{../hdl/sim/test_debounce.sv}
-\begin{figure}[ht]
-	\centering
-	\input{figs/timing/test_debounce}
-	\caption{\texttt{test\_debounce.sv} Output}
-	\label{fig:test-debounce}
-\end{figure}
-
-%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%
-
-\lstinputlisting[language=verilog, caption={\texttt{test\_mult.sv} Stimulus}, label={lst:test-mult},firstnumber=17,linerange={17-37}]{../hdl/sim/test_mult.sv}
+\lstinputlisting[language=verilog, caption={\texttt{test\_mult.sv} Stimulus}, label={lst:test-mult},firstnumber=45,linerange={45-54}]{../hdl/sim/test_mult.sv}
 \begin{figure}[ht]
 	\centering
 	\input{figs/timing/test_mult}
@@ -221,23 +250,11 @@
 	\label{fig:test-mult}
 \end{figure}
 
-%%%%%%%%%%%%%
+\FloatBarrier
+\subsection{Main state Machine}
+In order to test the main state machine, dummy values of each input word, and the result from the multiplier are presented to the state machine at the relevant time, and the result is checked in each instance by assertion. For the simulation, the state machine was presented with the values $1,\dots,6$. The stimulus for simulation is presented in Listing \ref{lst:test-sm}, and the resultant waveform is shown in Figure \ref{fig:test-sm}.
 
-%%%%%%%%%%%%%
-
-\lstinputlisting[language=verilog, caption={\texttt{test\_read\_sm.sv} Stimulus}, label={lst:test-read-sm},firstnumber=17,linerange={17-37}]{../hdl/sim/test_read_sm.sv}
-\begin{figure}[ht]
-	\centering
-	\input{figs/timing/test_read_sm}
-	\caption{\texttt{test\_read\_sm.sv} Output}
-	\label{fig:test-read-sm}
-\end{figure}
-
-%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%
-
-\lstinputlisting[language=verilog, caption={\texttt{test\_sm.sv} Stimulus}, label={lst:test-sm},firstnumber=17,linerange={17-37}]{../hdl/sim/test_sm.sv}
+\lstinputlisting[language=verilog, caption={\texttt{test\_sm.sv} Stimulus}, label={lst:test-sm},firstnumber=80,linerange={80-89}]{../hdl/sim/test_sm.sv}
 \begin{figure}[ht]
 	\centering
 	\input{figs/timing/test_sm}
@@ -245,11 +262,68 @@
 	\label{fig:test-sm}
 \end{figure}
 
-%%%%%%%%%%%%%
+\FloatBarrier
+\subsection{Read State Machine}
+Testing of the read state machine was performed by providing generating \texttt{run} and \texttt{handshake} signals, then testing by assertion that the \texttt{read} and \texttt{done} outputs performed as expected. The stimulus used, and resultant waveform is presented in Listing \ref{lst:test-read-sm} and Figure \ref{fig:test-read-sm} respectively.
 
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_read\_sm.sv} Stimulus}, label={lst:test-read-sm},firstnumber=26,linerange={26-42}]{../hdl/sim/test_read_sm.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_read_sm}
+	\caption{\texttt{test\_read\_sm.sv} Output}
+	\label{fig:test-read-sm}
+\end{figure}
+
+\FloatBarrier
+\subsection{Debouncer}
+To test the debouncer, the module was parametrised to wait for \SI{100}{\nano\second}, then an oscillating input stimulus was presented, and the output was verified by assertion. The stimulus used, and resultant waveform is presented in Listing \ref{lst:test-debounce} and Figure \ref{fig:test-debounce} respectively.
+
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_debounce.sv} Stimulus}, label={lst:test-debounce},firstnumber=29,linerange={29-41}]{../hdl/sim/test_debounce.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_debounce}
+	\caption{\texttt{test\_debounce.sv} Output}
+	\label{fig:test-debounce}
+\end{figure}
+
+\FloatBarrier
+\subsection{\glsentryshort{bcd} Decoder}
+Testing of the \glsentryshort{bcd} decoder consists of looping through all possible input values and observing the outputs, this is conducted with the stimulus of Listing \ref{lst:test-bin-to-bcd}, and the output waveform, Figure \ref{fig:test-bin-to-bcd}, for the first two numbers $-128$ and $-127$ shows the numbers correctly decoded.
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_bin\_to\_bcd.sv} Stimulus}, label={lst:test-bin-to-bcd},firstnumber=10,linerange={10-18}]{../hdl/sim/test_bin_to_bcd.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_bin_to_bcd}
+	\caption{\texttt{test\_bin\_to\_bcd.sv} Output}
+	\label{fig:test-bin-to-bcd}
+\end{figure}
+
+\FloatBarrier
+\subsection{System Level}
+The system level testing is conducted in a similar manner to the testing of the multiplier described in Section \ref{sec:test-mult}. A set of test vectors were generated using the fixed-point library in \gls{matlab}, and exported to a text file. This is discussed in Appendix \ref{app:matlab-code}. The test vectors are asserted on the input bus, and the handshake switch is toggled as appropriate, the outputs are then verified as correct using assertions.
+
+Listing \ref{lst:test-cmplx-mult} shows the stimulus used, and Figure \ref{fig:test-cmplx-mult} shows the output. It can be seen that the correct result is asserted on the outputs at the correct time. It should be noted that the small delay between the transition of handshake and the transition of the \glspl{led} is due to the debouncing of the switches.
+
+\lstinputlisting[language=verilog, caption={\texttt{test\_cmplx\_mult.sv} Stimulus}, label={lst:test-cmplx-mult},firstnumber=79,linerange={79-94}]{../hdl/sim/test_cmplx_mult.sv}
+\begin{figure}[ht]
+	\centering
+	\input{figs/timing/test_cmplx_mult}
+	\caption{\texttt{test\_cmplx\_mult.sv} Output}
+	\label{fig:test-cmplx-mult}
+\end{figure}
+
+\FloatBarrier
 \section{Synthesis}  \label{sec:synth}
-\review{Include ``Synthesis Result''}
+The SystemVerilog module was successfully synthesised using Quartus, and the resource utilisation summary is listed in Listing \ref{lst:synth-res}. It should be noted however that much of this cost figure is consumed by the binary to decimal decoders, which do not form part of the core specification.
 
+\lstinputlisting[caption={Synthesis Result}, label={lst:synth-res},firstnumber=8,linerange={8-16}]{../hdl/synth/output_files/cmplx_mult.fit.summary}
 
+No significant problems were encountered when testing the implemented design using the \gls{fpga} developement board, and the validation strategy was to use test vectors generated by \gls{matlab} and compare the result presented on the \glspl{led} against the result calculated by \gls{matlab}.
+
+\FloatBarrier
 \section{Conclusion}  \label{sec:conclusion}
+In conclusion, all the objectives outlined in Section \ref{sec:intro} have been achieved. Design of the system has been discussed in Section \ref{sec:design}, this was then verified and implemented in hardware successfully as discussed in Sections \ref{sec:verif} and \ref{sec:synth} respectively. In addition the project has been extended by adding a decimal readout of the switches and result.
 
+The project has therefore been a success, and it is difficult to imagine how it could be improved without modification to the specification.

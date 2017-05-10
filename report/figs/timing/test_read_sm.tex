@@ -1,9 +1,14 @@
-\begin{tikztimingtable} [xscale=2.0]
-	clk & L L L H L H L H L H L H L H L H L H L H L H L H L H L H L H L H \\
+%Verified
+\begin{tikztimingtable} [xscale=1.5]
+	clk & L L L 29{C} \\
 	reset\_n & H L H H H H H H H H H H H H H H H H H H H H H H H H H H H H H H \\
-	handshake & L L L L L L L L L L L L L H H H H H H H H H H L L L L L L L L L \\
-	state[3:0] & 7D{HALT} 16D{****} 2D{DONE} 7D{HALT} \\
+	handshake & 13{L} 10{H} 9{L} \\
+	state & 7D{HALT} 6D{WAIT\_1} 10D{WAIT\_0} 2D{DONE} 7D{HALT} \\
 	run & L L L L L H H L L L L L L L L L L L L L L L L L L L L L L L L L \\
 	read & X L L L L L L L L L L L L H H L L L L L L L L L L L L L L L L L \\
 	done & L L L L L L L L L L L L L L L L L L L L L L L H H L L L L L L L \\
+\extracode
+\begin{pgfonlayer}{background}
+	\vertlines[gray!40]{3,5,...,31}
+\end{pgfonlayer}
 \end{tikztimingtable}

@@ -1,14 +1,16 @@
-\begin{tikztimingtable} [xscale=2.0]
-	reset\_n & H L H H H H H H H H H H H H H \\
-	handshake & L L L H L H L H L H L L H H L \\
-	data\_in[7:0] & 3D{0x0} 2D{0xd0} 2D{0xe7} 2D{0x21} 6D{0xe9} \\
-	LED[7:0] & 11D{0x0} 2D{0xde} 2D{0x4} \\
-	HEX0[6:0] & 3D{0x40} 2D{0x0} 2D{0x12} 8D{0x30} \\
-	HEX1[6:0] & 3D{0x40} 2D{0x19} 2D{0x24} 2D{0x30} 6D{0x24} \\
-	HEX2[6:0] & 15D{0x40} \\
-	HEX3[6:0] & 3D{0x7f} 4D{0x3f} 2D{0x7f} 6D{0x3f} \\
-	HEX4[6:0] & 11D{0x40} 4D{0x19} \\
-	HEX5[6:0] & 11D{0x40} 2D{0x30} 2D{0x40} \\
-	HEX6[6:0] & 15D{0x40} \\
-	HEX7[6:0] & 11D{0x7f} 2D{0x3f} 2D{0x7f} \\
+%Verified
+\begin{tikztimingtable} [xscale=3]
+	clk & 13{U} \\
+	reset\_n & H L H H H H H H H H H H H \\
+	handshake & L L L H L H L H L H L H L \\
+	data\_in[7:0] & 3D{0x0} 2D{0xd0} 2D{0xe7} 2D{0x21} 4D{0xe9} \\
+	LED[7:0] & 10.5D{0x0} D{0xde} D{0x4} 0.5D{} \\
+	HEX0[6:0] & 3D{0x40} 2D{0x0} 2D{0x12} 6D{0x30} \\
+	HEX1[6:0] & 3D{0x40} 2D{0x19} 2D{0x24} 2D{0x30} 4D{0x24} \\
+	HEX2[6:0] & 13D{0x40} \\
+	HEX3[6:0] & 3D{0x7f} 4D{0x3f} 2D{0x7f} 4D{0x3f} \\
+	HEX4[6:0] & 10.5D{0x40} 2D{0x19} 0.5D{} \\
+	HEX5[6:0] & 10.5D{0x40} D{0x30} 1.5D{0x40} \\
+	HEX6[6:0] & 13D{0x40} \\
+	HEX7[6:0] & 10.5D{0x7f} D{0x3f} 1.5D{0x7f} \\
 \end{tikztimingtable}

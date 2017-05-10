@@ -1,4 +1,24 @@
 \clearpage
 \begin{appendices}
 
+\section{\glsentryshort{matlab} Test Vector Generation} \label{app:matlab-code}
+This Appendix briefly describes the use of \gls{matlab} to generate the test vectors for the multiplier testing, and overall system testing.
+
+Listing \ref{lst:gen-mult-tests} shows the script used to generate the overall system tests. \texttt{generate\_fp\_num} (source listed in Listing \ref{lst:gen-fp-num}) is a function which generates a random 15-bit fixed point number, either in the format of $\alpha$, $q$, or using all the bits. The type of number generated depends on the input argument.
+
+The generated numbers are then paired to from complex numbers, and the two resultant complex numbers are multiplied.
+
+The relevant bits of the result are then extracted using \texttt{extract\_result} (source listed in Listing \ref{lst:extract-result}), and the input and output numbers are logged to a text file. A sample output file is listed in Listing \ref{lst:mult-tests}.
+
+A very similar process is followed to generate tests for just the multiplier, except \ref{lst:gen-fp-num} is configured to generate a purely random 15-bit number, and the full significance of the result is used.
+
+\lstinputlisting[language=matlab, caption={\texttt{generate\_mult\_tests.m}}, label={lst:gen-mult-tests}]{../matlab/generate_mult_tests.m}
+
+\lstinputlisting[language=matlab, caption={\texttt{generate\_fp\_num.m}}, label={lst:gen-fp-num}]{../matlab/generate_fp_num.m}
+
+\lstinputlisting[language=matlab, caption={\texttt{extract\_result.m}}, label={lst:extract-result}]{../matlab/extract_result.m}
+
+\lstinputlisting[language=matlab, caption={Sample generated tests}, label={lst:mult-tests}]{../matlab/mult_tests.txt}
+
+
 \end{appendices}

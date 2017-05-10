@@ -94,7 +94,7 @@
 \usepackage{caption}
 \usepackage{subcaption}
 
-
+\usepackage{MnSymbol} % Right arrow and other symbols
 
 %Listings
 \usepackage{listings,chngcntr}
@@ -108,7 +108,8 @@
 	commentstyle=\color{ForestGreen}, % comment color
 	keywordstyle=\color{blue}, % keyword color
 	stringstyle=\color{red}, % string color
-	basicstyle=\small %normal font size
+	basicstyle=\small, %normal font size
+	postbreak=\raisebox{0ex}[0ex][0ex]{\ensuremath{\rcurvearrowse\space}} %Chaacter to display on broken line
 }
 
 

@@ -88,7 +88,7 @@ begin
 	while($fscanf(file,"%b, %b, %b, %b, %b, %b, %s\n", re_a, im_a, re_q, im_q, re_res, im_res, description) == 7)
 	begin
 		testCycle(re_a, im_a, re_q, im_q, re_res, im_res);
-		assert(0) else $fatal;
+//		assert(0) else $fatal;
 	end
 	$stop;
 end
