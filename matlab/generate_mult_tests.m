@@ -6,7 +6,7 @@ fimath('OverflowAction', 'Wrap', 'RoundingMethod','Zero');
 
 file = fopen('mult_tests.txt','w');
 
-for i = 1:10
+for i = 1:1000
     [a_re, a_re_bits] = generate_fp_num('a');
     [a_im, a_im_bits] = generate_fp_num('a');
 
