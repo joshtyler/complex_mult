@@ -4,7 +4,7 @@ The aim of this assignment is to design, and implement using SystemVerilog, a mu
 The objectives are:
 \begin{enumerate}
 	\item Design of hardware capable of multiplying two complex numbers.
-	\item Implementation of the design using SystemVerilog.
+	\item Modelling of the design using SystemVerilog.
 	\item Verification of the SystemVerilog model, by simulation.
 	\item Hardware implementation and validation of design
 \end{enumerate}
@@ -20,15 +20,15 @@ This report contains timing diagrams which have been exported from ModelSim, and
 
 \subsection{Overview} \label{sec:design-overview}
 
-Figure \ref{fig:overall-block-diag} shows the overall block diagram of the implemented design. The central block is the main state machine of the design. This state machine is responsible for reading the desired input values from switches, storing them in registers, and displaying the calculated result on \glspl{led}.
+Figure \ref{fig:overall-block-diag} shows the overall block diagram of the implemented design. The central block is the main state machine. This state machine is responsible for reading the desired input values from switches, storing them in registers, and displaying the calculated result on \glspl{led}.
 
-The most significant two switches are debounced before being presented to the state machine. One switch is responsible for signalling when to load each input word, display each output word (referred to herein as the `handshake' switch). The other is an asynchronous reset switch. Switch bounce would be a problem on these switches, however switches are only sampled on transition of the handshake switch, therefore debouncing is unnecessary.
+The most significant two switches are debounced before being presented to the state machine. One switch is responsible for signalling when to load each input word, and display each output word (referred to herein as the `handshake' switch). The other is an asynchronous reset switch. Switch bounce would be a problem on these switches, however the other switches are only sampled on transition of the handshake switch, therefore debouncing is unnecessary.
 
 The multiplier is purely combinational and calculates the result of multiplication of the input words presented to it by the state machine. The state machine then multiplexes the relevant result word to the output.
 
 It should be noted that both the input and output words are truncated from what the multiplier is capable of. This is discussed further in section \ref{sec:design-mult}.
 
-The two display decoders take an 8-bit signed input word each, and display the result on seven segment displays.
+The two display decoders take an 8-bit signed input word each, and display the result on 7-segment displays.
 
 
 
@@ -59,10 +59,10 @@ The two display decoders take an 8-bit signed input word each, and display the r
 	\buswidth{dbnce.east}{$2$}{above}{-\buswidthoffset}{0};
 	
 	%Output side arrows
-	\draw[arrowNml] (displed.east) -- ++(\tikzNodeDist,0) coordinate(output) node[right] {\shortstack{LED\\7 Segment\\Displays}};
+	\draw[arrowNml] (displed.east) -- ++(\tikzNodeDist,0) coordinate(output) node[right] {\shortstack{LED\\7-Segment\\Displays}};
 	\buswidth{displed.east}{$21$}{above}{-\buswidthoffset}{0};
 	
-	\draw[arrowNml] (dispsw.east) -- (output |- dispsw.east) node[right] {\shortstack{Switch\\7 Segment\\Displays}};
+	\draw[arrowNml] (dispsw.east) -- (output |- dispsw.east) node[right] {\shortstack{Switch\\7-Segment\\Displays}};
 	\buswidth{dispsw.east}{$21$}{above}{-\buswidthoffset}{0};
 	
 	
@@ -91,7 +91,7 @@ The two display decoders take an 8-bit signed input word each, and display the r
 \FloatBarrier
 \subsection{Complex Multiplier} \label{sec:design-mult}
 
-A block diagram of the complex Multiplier is shown in Figure \ref{fig:mult-arch}. This is the traditional architecture for multiplication of complex numbers, and contains four $n$-bit multipliers, a $2n$-bit adder, and a $2n$-bit subtracter. This architecture comes from expanding the multiplication of two complex numbers $x = a + jb$, and $y = c + jd$, as shown by Equation \ref{eq:cmplx-mult}.
+A block diagram of the complex multiplier is shown in Figure \ref{fig:mult-arch}. This is the traditional architecture for multiplication of complex numbers, and contains four $n$-bit multipliers, a $2n$-bit adder, and a $2n$-bit subtracter. This architecture comes from expanding the multiplication of two complex numbers $x = a + jb$, and $y = c + jd$, as shown by Equation \ref{eq:cmplx-mult}.
 
 \begin{align}
 	z &= (a+jb)(c+jd) \nonumber \\
@@ -161,11 +161,11 @@ A block diagram of the complex Multiplier is shown in Figure \ref{fig:mult-arch}
 \end{figure}
 
 
-An alternative architecture is possible, which requires, two $n$-bit adders, an $n$-bit subtracter, three $n$-bit multipliers, a $2n$-bit adder, and a $2n$-bit subtracter. This architecture is often preferred if implementing a multiplier from logic elements, as a multiplier would use many more logic elements than an adder and subtracter. The Cyclone IV \gls{fpga} that is used for this implementation has many hardware multipliers, which cannot be reconfigured to another purpose if not used \cite[p.4-1]{altera2016}. Therefore it is advantageous to make use of them, and save the logic elements which would be required for the adder and subtracter.
+An alternative architecture is possible, which requires, two $n$-bit adders, an $n$-bit subtracter, three $n$-bit multipliers, a $2n$-bit adder, and a $2n$-bit subtracter. This architecture is often preferred if implementing the multipliers from logic elements, as a multiplier would use many more logic elements than an adder and subtracter combined. The Cyclone IV \gls{fpga} that is used for this implementation has many hardware multipliers, which cannot be reconfigured to another purpose if not used \cite[p.4-1]{altera2016}. Therefore it is advantageous to make use of them, and save the logic elements which would be required for the adder and subtracter.
 
-The inputs to the multiplier are 15-bits wide, which is far greater than the 8-bit words used by the rest of the system. This is necessary because the binary values of the two input words defined in the specification $\alpha$ and $q$, have different bit significances to each other \cite{kazmierski2017}. The real and imaginary parts of $q$ use the standard 8-bit signed integer representation, having bit significances $-2^7,2^6,...,2^0$. $\alpha$, however, uses a fixed point representation with bit significances $-2^0,2^{-1},...,2^{-7}$.
+The inputs to the multiplier are 15-bits wide, which is far greater than the 8-bit words used by the rest of the system. This is necessary because the binary values of the two input words, $\alpha$ and $q$, have different bit significances to each other \cite{kazmierski2017}. The real and imaginary parts of $q$ use the standard 8-bit signed integer representation, having bit significances $-2^7,2^6,...,2^0$. $\alpha$, however, uses a fixed point representation with bit significances $-2^0,2^{-1},...,2^{-7}$.
 
-The multiplier input words are thus designed to be wide enough to accept both of these representations. Since the $2^0$ bit is present in both, 15 bits are necessary in total. The $q$ bits are right padded with 7 0s, and the $\alpha$ bits are sign extended.
+The multiplier input words are thus designed to be wide enough to accept both of these representations. Since the $2^0$ bit is present in both, 15 bits are necessary in total. The $q$ bits are right padded with seven 0s, and the $\alpha$ bits are sign extended.
 
 \FloatBarrier
 \subsection{State Machine} \label{sec:design-sm}
@@ -238,7 +238,7 @@ This section, briefly, presents the verification results of each module, as well
 \subsection{Multiplier} \label{sec:test-mult}
 In order to test the multiplier, a set of test vectors were generated using the fixed-point library in \gls{matlab}, and exported to a text file. This is discussed in Appendix \ref{app:matlab-code}.
 
-Listing \ref{lst:test-mult} shows the stimulus used, which loads all of the vectors from the text file. The output waveform, Figure \ref{fig:test-mult} shows the response of the multiplier to each set of inputs. This is verified using assertions in the \texttt{testNums} task.
+Listing \ref{lst:test-mult} shows the stimulus used, which loads all of the vectors from the text file. The output waveform, Figure \ref{fig:test-mult}, shows the response of the multiplier to each set of inputs. This is verified using assertions in the \texttt{testNums} task.
 
 \lstinputlisting[language=verilog, caption={\texttt{test\_mult.sv} Stimulus}, label={lst:test-mult},firstnumber=45,linerange={45-54}]{../hdl/sim/test_mult.sv}
 \begin{figure}[ht]
